@@ -9,15 +9,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { mockCategories } from "@/lib/mockData";
 import { Upload, Image as ImageIcon, Check } from "lucide-react";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function SubmitPage() {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+  // Check if the user is connected via their wallet
+  const { isConnected } = useAccount();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -35,6 +40,12 @@ export default function SubmitPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Since the submit button only appears when connected, this check is redundant but kept for safety
+    if (!isConnected) {
+      return; // Won’t trigger due to conditional rendering
+    }
+
     setIsSubmitting(true);
     
     // Simulate API call
@@ -80,6 +91,7 @@ export default function SubmitPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -89,6 +101,7 @@ export default function SubmitPage() {
                 value={category}
                 onValueChange={setCategory}
                 required
+                disabled={isSubmitting}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
@@ -111,6 +124,7 @@ export default function SubmitPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -134,6 +148,7 @@ export default function SubmitPage() {
                           setFile(null);
                           setPreviewUrl(null);
                         }}
+                        disabled={isSubmitting}
                       >
                         Remove Image
                       </Button>
@@ -157,12 +172,14 @@ export default function SubmitPage() {
                       className="hidden"
                       onChange={handleFileChange}
                       required
+                      disabled={isSubmitting}
                     />
                     <Button
                       type="button"
                       variant="outline"
                       className="mt-4"
                       onClick={() => document.getElementById("meme-upload")?.click()}
+                      disabled={isSubmitting}
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Browse Files
@@ -173,22 +190,38 @@ export default function SubmitPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isSubmitting || isSubmitted || !title || !category || !file}
-            >
-              {isSubmitting ? (
-                <>Submitting...</>
-              ) : isSubmitted ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Submitted Successfully
-                </>
-              ) : (
-                <>Submit Meme</>
-              )}
-            </Button>
+            {isConnected ? (
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting || isSubmitted || !title || !category || !file}
+              >
+                {isSubmitting ? (
+                  <>Submitting...</>
+                ) : isSubmitted ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Submitted Successfully
+                  </>
+                ) : (
+                  <>Submit Meme</>
+                )}
+              </Button>
+            ) : (
+              <div className="w-full text-center bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md">
+                <p className="font-medium">Wallet Not Connected</p>
+                <p className="text-sm">
+                  Please connect your wallet to submit a meme.
+                </p>
+                <div className="mt-2 flex justify-center">
+                  <ConnectButton 
+                    label="Connect Wallet to Submit"
+                    showBalance={false}
+                    chainStatus="none"
+                  />
+                </div>
+              </div>
+            )}
           </CardFooter>
         </form>
       </Card>

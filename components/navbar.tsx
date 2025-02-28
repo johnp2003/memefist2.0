@@ -31,12 +31,10 @@ export default function Navbar() {
   // Get the user's ETH balance
   const { data: balance } = useBalance({
     address: address,
-    // Optional: specify chainId if you want to restrict to a specific chain
-    // chainId: sepolia.id, // Uncomment and adjust if needed
   });
 
-  // Format the balance (if available) or default to 0
-  const userEarnings = balance ? Number(balance.formatted).toFixed(2) : "0.00";
+  // Change the value to retrieve from smart contract
+  const userEarnings = "0.00";
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b border-border">
