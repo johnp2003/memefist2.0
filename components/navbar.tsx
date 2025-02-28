@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Button } from "@/components/ui/button";
-import { 
-  Trophy, 
-  Upload, 
-  Home, 
-  Menu, 
-  X, 
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useBalance } from "wagmi";
+import {
+  Trophy,
+  Upload,
+  Home,
+  Menu,
+  X,
   Wallet,
   Swords,
   ShoppingBag,
@@ -17,21 +19,24 @@ import {
 } from "lucide-react";
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
-  const [userEarnings, setUserEarnings] = useState(0);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
+  const toggleMenu = (): void => {
+    setIsOpen((prev) => !prev);
   };
 
-  const connectWallet = () => {
-    // Mock wallet connection
-    setIsConnected(true);
-    setWalletAddress("0x1234...5678");
-    setUserEarnings(1.25); // Mock earnings in ETH
-  };
+  // Get account details from Wagmi
+  const { address, isConnected } = useAccount();
+
+  // Get the user's ETH balance
+  const { data: balance } = useBalance({
+    address: address,
+    // Optional: specify chainId if you want to restrict to a specific chain
+    // chainId: sepolia.id, // Uncomment and adjust if needed
+  });
+
+  // Format the balance (if available) or default to 0
+  const userEarnings = balance ? Number(balance.formatted).toFixed(2) : "0.00";
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b border-border">
@@ -74,16 +79,23 @@ export default function Navbar() {
                 <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                   {userEarnings} ETH
                 </div>
-                <Button variant="outline">
-                  <Wallet className="h-4 w-4 mr-2" />
-                  {walletAddress}
+                <Button variant="outline" asChild>
+                  <ConnectButton.Custom>
+                    {({ account, chain, openAccountModal }) => (
+                      <div
+                        onClick={openAccountModal}
+                        className="flex items-center cursor-pointer"
+                      >
+                        <Wallet className="h-4 w-4 mr-2" />
+                        {account?.displayName}
+                        {chain?.name && ` (${chain.name})`}
+                      </div>
+                    )}
+                  </ConnectButton.Custom>
                 </Button>
               </div>
             ) : (
-              <Button onClick={connectWallet}>
-                <Wallet className="h-4 w-4 mr-2" />
-                Connect Wallet
-              </Button>
+              <ConnectButton label="Connect Wallet" />
             )}
           </div>
 
@@ -108,32 +120,32 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-accent"
               onClick={() => setIsOpen(false)}
             >
               <Home className="h-5 w-5 mr-2" />
               Home
             </Link>
-            <Link 
-              href="/battle/all" 
+            <Link
+              href="/battle/all"
               className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-accent"
               onClick={() => setIsOpen(false)}
             >
               <Swords className="h-5 w-5 mr-2" />
               Memes
             </Link>
-            <Link 
-              href="/leaderboard" 
+            <Link
+              href="/leaderboard"
               className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-accent"
               onClick={() => setIsOpen(false)}
             >
               <Trophy className="h-5 w-5 mr-2" />
               Leaderboard
             </Link>
-            <Link 
-              href="/marketplace" 
+            <Link
+              href="/marketplace"
               className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-accent"
               onClick={() => setIsOpen(false)}
             >
@@ -141,8 +153,8 @@ export default function Navbar() {
               Marketplace
             </Link>
             {isConnected && (
-              <Link 
-                href="/my-nfts" 
+              <Link
+                href="/my-nfts"
                 className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-accent"
                 onClick={() => setIsOpen(false)}
               >
@@ -155,17 +167,24 @@ export default function Navbar() {
                 <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium inline-block">
                   {userEarnings} ETH
                 </div>
-                <Button variant="outline" className="w-full">
-                  <Wallet className="h-4 w-4 mr-2" />
-                  {walletAddress}
+                <Button variant="outline" className="w-full" asChild>
+                  <ConnectButton.Custom>
+                    {({ account, chain, openAccountModal }) => (
+                      <div
+                        onClick={openAccountModal}
+                        className="flex items-center cursor-pointer"
+                      >
+                        <Wallet className="h-4 w-4 mr-2" />
+                        {account?.displayName}
+                        {chain?.name && ` (${chain.name})`}
+                      </div>
+                    )}
+                  </ConnectButton.Custom>
                 </Button>
               </div>
             ) : (
               <div className="px-3 py-2">
-                <Button onClick={connectWallet} className="w-full">
-                  <Wallet className="h-4 w-4 mr-2" />
-                  Connect Wallet
-                </Button>
+                <ConnectButton label="Connect Wallet" />
               </div>
             )}
           </div>
