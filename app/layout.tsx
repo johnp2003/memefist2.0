@@ -12,6 +12,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sepolia, scrollSepolia } from "wagmi/chains";
 import type { ReactNode } from "react";
+import { Head } from 'react-day-picker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -32,6 +33,10 @@ export default function Layout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>MemeFist</title>
+        <link rel='icon' href='/swords.png'></link>
+      </head>
       <body className={inter.className}>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
