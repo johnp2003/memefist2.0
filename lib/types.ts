@@ -40,6 +40,8 @@ export interface Category {
   activeBattles: number;
   prizePool?: number;
   endTime?: string;
+  imageUrl: string;
+  status?: 'ongoing' | 'upcoming' | 'closed';
 }
 
 export interface NFT {

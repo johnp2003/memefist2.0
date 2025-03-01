@@ -1,28 +1,45 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Category } from "@/lib/types";
-import { Bitcoin, Gamepad2, Cpu, Laugh, Image, Clock } from "lucide-react";
+import { Battle, Category } from "@/lib/types";
+import { Bitcoin, Gamepad2, Cpu, Laugh, Clock, Coins, Users, Trophy } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { getBattlesByCategory } from "@/lib/mockData";
 
 interface CategoryCardProps {
   category: Category;
 }
 
 export default function CategoryCard({ category }: CategoryCardProps) {
+  const [battle, setBattle] = useState<Battle | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      const fetchedBattles = getBattlesByCategory(category.name);
+      setBattle(fetchedBattles[0] || null);
+      setLoading(false);
+    }, 500);
+  }, [category.name]);
+
   const getIcon = () => {
     switch (category.icon) {
       case 'bitcoin':
-        return <Bitcoin className="h-8 w-8" />;
+        return <Bitcoin className="h-5 w-5" />;
       case 'gamepad-2':
-        return <Gamepad2 className="h-8 w-8" />;
+        return <Gamepad2 className="h-5 w-5" />;
       case 'cpu':
-        return <Cpu className="h-8 w-8" />;
+        return <Cpu className="h-5 w-5" />;
       case 'laugh':
-        return <Laugh className="h-8 w-8" />;
-      case 'image':
-        return <Image className="h-8 w-8" />;
+        return <Laugh className="h-5 w-5" />;
+      // case 'image':
+      //   return <Image className="h-8 w-8" />;
       default:
-        return <Bitcoin className="h-8 w-8" />;
+        return <Coins className="h-5 w-5" />;
     }
   };
 
@@ -31,30 +48,88 @@ export default function CategoryCard({ category }: CategoryCardProps) {
   endTime.setHours(endTime.getHours() + 72);
   const timeRemaining = formatDistanceToNow(endTime, { addSuffix: false });
 
+  // Function to get status badge
+  const getStatusBadge = () => {
+    const statusClass = {
+      ongoing: "bg-green-100 text-green-800",
+      upcoming: "bg-blue-100 text-blue-800",
+      closed: "bg-gray-100 text-red-800"
+    };
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass[category.status || 'ongoing']}`}>
+        {category.status ? category.status.charAt(0).toUpperCase() + category.status.slice(1) : 'Ongoing'}
+      </span>
+    );
+  };
+
+  const getActiveBattlesColor = () => {
+    if (category.activeBattles <= 3) return "text-red-700 font-semibold";
+    if (category.activeBattles <= 6) return "text-orange-600 font-medium";
+    return "text-green-700 font-medium";
+  };
+
   return (
     <Link href={`/battle/${category.name.toLowerCase()}`}>
-      <Card className="h-full hover:shadow-md transition-shadow duration-200 cursor-pointer">
-        <CardContent className="pt-6 flex flex-col items-center text-center">
-          <div className="p-3 rounded-full bg-primary/10 text-primary mb-4">
-            {getIcon()}
+      <Card className="overflow-hidden w-full group border-transparent hover:border-gray-200 transition-colors duration-200 ease-in-out">
+        <div className="relative w-full h-40 overflow-hidden">
+          <Image 
+            src={category.imageUrl} 
+            alt={category.name}
+            fill
+            className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-110"
+          />
+          {/* <div className="absolute top-2 right-2">
+            {getStatusBadge()}
+          </div> */}
+        </div>
+        <CardContent className="pt-4">
+          <div className="flex items-center mb-2">
+            <div className="p-2 rounded-full bg-primary/10 text-primary mr-2">
+              {getIcon()}
+            </div>
+            <h3 className="text-lg font-semibold">{category.name}</h3>
           </div>
-          <h3 className="text-lg font-semibold mb-2">{category.name}</h3>
-          <p className="text-sm text-muted-foreground mb-4">{category.description}</p>
+          <p className="text-sm text-muted-foreground mb-3">{category.description}</p>
           
-          <div className="bg-accent/50 rounded-lg p-3 w-full mb-4">
-            <p className="text-sm font-medium">Prize Pool</p>
-            <p className="text-xl font-bold">{(Math.random() * 2 + 0.5).toFixed(2)} ETH</p>
-          </div>
-          
-          <div className="flex items-center justify-center text-sm text-muted-foreground">
+          {/* <div className="flex items-center text-sm text-muted-foreground mb-4">
             <Clock className="h-4 w-4 mr-1" />
             <span>{timeRemaining} remaining</span>
+          </div> */}
+
+          <div className="text-sm font-medium flex items-center">
+            <Users className="h-4 w-4 mr-1" />
+            {loading ? "Loading entries..." : `${battle?.memes.length || 0} Entries`}
           </div>
+
+          <div className="text-sm font-medium flex items-center mt-2">
+            <Trophy className="h-4 w-4 mr-1" />
+            Prize: {battle?.prizePool || 0}x NFTs Value
+          </div>
+
         </CardContent>
-        <CardFooter className="pt-0 pb-6 flex justify-center">
-          <div className="text-sm font-medium">
-            {category.activeBattles === 1 ? 'Active Battle' : 'Active Battle'}
-          </div>
+        <CardFooter className="pt-0 pb-4 flex justify-center items-center">
+          {/* <div className="text-sm font-medium">
+            {category.activeBattles === 1 ? '1 Active Battle' : `${category.activeBattles} Active Battles`}
+          </div> */}
+          <button className="relative group border-none bg-transparent p-0 outline-none cursor-pointer font-mono font-light uppercase text-base">
+            <span className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-25 rounded-lg transform translate-y-0.5 transition duration-[600ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] group-hover:translate-y-1 group-hover:duration-[250ms] group-active:translate-y-px"></span>
+            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-[hsl(217,33%,16%)] via-[hsl(217,33%,32%)] to-[hsl(217,33%,16%)]"></span>
+            <div className="relative flex items-center justify-between py-2 px-4 text-lg text-white rounded-lg transform -translate-y-1 bg-gradient-to-r from-[#f27121] via-[#e94057] to-[#8a2387] gap-3 transition duration-[600ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] group-hover:-translate-y-1.5 group-hover:duration-[250ms] group-active:-translate-y-0.5 brightness-100 group-hover:brightness-110">
+              <span className="select-none">Show Details</span>
+              <svg
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-5 h-5 ml-2 -mr-1 transition duration-250 group-hover:translate-x-1"
+              >
+                <path
+                  clip-rule="evenodd"
+                  d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                  fill-rule="evenodd"
+                ></path>
+              </svg>
+            </div>
+          </button>
         </CardFooter>
       </Card>
     </Link>

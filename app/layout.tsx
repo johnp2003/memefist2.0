@@ -12,6 +12,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sepolia, scrollSepolia } from "wagmi/chains";
 import type { ReactNode } from "react";
+import { Providers } from './providers';
 import { Head } from 'react-day-picker';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -38,21 +39,23 @@ export default function Layout({
         <link rel='icon' href='/swords.png'></link>
       </head>
       <body className={inter.className}>
-        <WagmiProvider config={config}>
-          <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                <Navbar />
-                <main className="min-h-screen">{children}</main>
-              </ThemeProvider>
-            </RainbowKitProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
+        <Providers>
+          <WagmiProvider config={config}>
+            <QueryClientProvider client={queryClient}>
+              <RainbowKitProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  <Navbar />
+                  <main className="min-h-screen">{children}</main>
+                </ThemeProvider>
+              </RainbowKitProvider>
+            </QueryClientProvider>
+          </WagmiProvider>
+        </Providers>
       </body>
     </html>
   );
