@@ -48,27 +48,6 @@ export default function CategoryCard({ category }: CategoryCardProps) {
   endTime.setHours(endTime.getHours() + 72);
   const timeRemaining = formatDistanceToNow(endTime, { addSuffix: false });
 
-  // Function to get status badge
-  const getStatusBadge = () => {
-    const statusClass = {
-      ongoing: "bg-green-100 text-green-800",
-      upcoming: "bg-blue-100 text-blue-800",
-      closed: "bg-gray-100 text-red-800"
-    };
-    
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass[category.status || 'ongoing']}`}>
-        {category.status ? category.status.charAt(0).toUpperCase() + category.status.slice(1) : 'Ongoing'}
-      </span>
-    );
-  };
-
-  const getActiveBattlesColor = () => {
-    if (category.activeBattles <= 3) return "text-red-700 font-semibold";
-    if (category.activeBattles <= 6) return "text-orange-600 font-medium";
-    return "text-green-700 font-medium";
-  };
-
   return (
     <Link href={`/battle/${category.name.toLowerCase()}`}>
       <Card className="overflow-hidden w-full group border-transparent hover:border-gray-200 transition-colors duration-200 ease-in-out">
@@ -79,9 +58,6 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             fill
             className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-110"
           />
-          {/* <div className="absolute top-2 right-2">
-            {getStatusBadge()}
-          </div> */}
         </div>
         <CardContent className="pt-4">
           <div className="flex items-center mb-2">

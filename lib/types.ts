@@ -27,9 +27,12 @@ export interface Battle {
   category: string;
   startDate: string;
   endDate: string;
+  maxEntries: number;
   memes: Meme[];
-  status: 'ongoing' | 'completed';
+  status?: 'ongoing' | 'upcoming' | 'closed';
   prizePool?: number;
+  imageUrl: string;
+  description: string;
 }
 
 export interface Category {
