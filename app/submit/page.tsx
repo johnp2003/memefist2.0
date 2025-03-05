@@ -9,8 +9,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { mockCategories } from "@/lib/mockData";
 import { Upload, Image as ImageIcon, Check } from "lucide-react";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ethers } from "ethers";
+import axios from "axios";
+
+const contractAddress = "0xC10B88aF2cf8480F9fA57ebc0EC4437a5FB6d233";
+const contractABI = [
+  {
+    "inputs": [
+      { "internalType": "string", "name": "category", "type": "string" },
+      { "internalType": "string", "name": "title", "type": "string" },
+      { "internalType": "string", "name": "description", "type": "string" },
+      { "internalType": "string", "name": "imageURI", "type": "string" }
+    ],
+    "name": "submitMeme",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
 export default function SubmitPage() {
   const [title, setTitle] = useState<string>("");
@@ -20,16 +38,15 @@ export default function SubmitPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Check if the user is connected via their wallet
   const { isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      
-      // Create a preview URL
       const reader = new FileReader();
       reader.onload = (event) => {
         setPreviewUrl(event.target?.result as string);
@@ -38,22 +55,53 @@ export default function SubmitPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadToPinata = async (file: File): Promise<string> => {
+    const url = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          "pinata_api_key": process.env.NEXT_PUBLIC_PINATA_API_KEY,
+          "pinata_secret_api_key": process.env.NEXT_PUBLIC_PINATA_API_SECRET,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      const ipfsHash = response.data.IpfsHash;
+      return `ipfs://${ipfsHash}`;
+    } catch (error) {
+      console.error("Pinata upload error:", error);
+      throw new Error("Failed to upload image to Pinata");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Since the submit button only appears when connected, this check is redundant but kept for safety
-    if (!isConnected) {
-      return; // Won’t trigger due to conditional rendering
+    if (!isConnected || !walletClient || !file) {
+      console.error("Wallet not connected or no file selected");
+      return;
     }
 
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      setIsUploading(true);
+      const imageURI = await uploadToPinata(file);
+      const formattedImageURI = imageURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+      console.log("Formatted Image URI:", formattedImageURI);
+      setIsUploading(false);
+
+      setIsSubmitting(true);
+      const provider = new ethers.BrowserProvider(walletClient);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      const tx = await contract.submitMeme(category, title, description, formattedImageURI);
+      const receipt = await tx.wait();
+      console.log("Transaction successful:", receipt.transactionHash); // transaction hash value still null
+
       setIsSubmitted(true);
-      
-      // Reset form after 2 seconds
+
       setTimeout(() => {
         setTitle("");
         setCategory("");
@@ -62,7 +110,13 @@ export default function SubmitPage() {
         setPreviewUrl(null);
         setIsSubmitted(false);
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting meme:", error);
+      alert("Failed to submit meme. Check console for details.");
+    } finally {
+      setIsSubmitting(false);
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -91,7 +145,7 @@ export default function SubmitPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading}
               />
             </div>
 
@@ -101,7 +155,7 @@ export default function SubmitPage() {
                 value={category}
                 onValueChange={setCategory}
                 required
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
@@ -124,7 +178,7 @@ export default function SubmitPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading}
               />
             </div>
 
@@ -148,7 +202,7 @@ export default function SubmitPage() {
                           setFile(null);
                           setPreviewUrl(null);
                         }}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploading}
                       >
                         Remove Image
                       </Button>
@@ -172,14 +226,14 @@ export default function SubmitPage() {
                       className="hidden"
                       onChange={handleFileChange}
                       required
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isUploading}
                     />
                     <Button
                       type="button"
                       variant="outline"
                       className="mt-4"
                       onClick={() => document.getElementById("meme-upload")?.click()}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isUploading}
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Browse Files
@@ -191,12 +245,14 @@ export default function SubmitPage() {
           </CardContent>
           <CardFooter>
             {isConnected ? (
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isSubmitting || isSubmitted || !title || !category || !file}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting || isSubmitted || isUploading || !title || !category || !file}
               >
-                {isSubmitting ? (
+                {isUploading ? (
+                  <>Uploading Image...</>
+                ) : isSubmitting ? (
                   <>Submitting...</>
                 ) : isSubmitted ? (
                   <>
@@ -214,7 +270,7 @@ export default function SubmitPage() {
                   Please connect your wallet to submit a meme.
                 </p>
                 <div className="mt-2 flex justify-center">
-                  <ConnectButton 
+                  <ConnectButton
                     label="Connect Wallet to Submit"
                     showBalance={false}
                     chainStatus="none"
