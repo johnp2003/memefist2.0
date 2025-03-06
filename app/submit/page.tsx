@@ -29,6 +29,8 @@ const contractABI = [
     "type": "function"
   }
 ];
+// import { usePinataUpload } from "@/hooks/usePinataUpload";
+// import { useSubmitMeme } from "@/hooks/use-submit-meme";
 
 export default function SubmitPage() {
   const [title, setTitle] = useState<string>("");

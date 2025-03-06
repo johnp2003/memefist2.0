@@ -105,6 +105,7 @@ export const mockMemes: Meme[] = [
   {
     id: '1',
     title: 'When your crypto finally moons',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1517960413843-0aee8e2b3285?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[0],
     upvotes: 342,
@@ -118,6 +119,7 @@ export const mockMemes: Meme[] = [
   {
     id: '2',
     title: 'Gamers when the servers go down',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[1],
     upvotes: 256,
@@ -131,6 +133,7 @@ export const mockMemes: Meme[] = [
   {
     id: '3',
     title: 'When you try to explain blockchain to your parents',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[2],
     upvotes: 198,
@@ -144,6 +147,7 @@ export const mockMemes: Meme[] = [
   {
     id: '4',
     title: 'Tech support be like',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1581092921461-7031e8fbc06e?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[3],
     upvotes: 175,
@@ -154,6 +158,7 @@ export const mockMemes: Meme[] = [
   {
     id: '5',
     title: 'NFT collectors when the floor price drops',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[4],
     upvotes: 132,
@@ -164,6 +169,7 @@ export const mockMemes: Meme[] = [
   {
     id: '6',
     title: 'When you finally understand smart contracts',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[0],
     upvotes: 210,
@@ -174,6 +180,7 @@ export const mockMemes: Meme[] = [
   {
     id: '7',
     title: 'Gamers at 4am',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[1],
     upvotes: 187,
@@ -184,6 +191,7 @@ export const mockMemes: Meme[] = [
   {
     id: '8',
     title: 'When your code finally works',
+    description: "",
     imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=500&auto=format&fit=crop',
     creator: mockUsers[2],
     upvotes: 165,
@@ -201,7 +209,7 @@ export const mockBattles: Battle[] = [
     startDate: '2025-04-01T00:00:00Z',
     endDate: new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
     maxEntries: 20,
-    memes: [mockMemes[0], mockMemes[2], mockMemes[5]],
+    memes: [],
     status: 'ongoing',
     prizePool: 1.5,
     imageUrl: '/crypto-battle.png',

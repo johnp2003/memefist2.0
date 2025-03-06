@@ -55,9 +55,15 @@ export default function MemeCard({ meme, showCategory = false }: MemeCardProps) 
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
       <CardHeader className="p-4 pb-2 space-y-0">
         <div className="flex items-center space-x-2">
+          {/* Shadcn Avatar */}
           <Avatar className="h-8 w-8">
-            <AvatarImage src={meme.creator.avatar} alt={meme.creator.username} />
-            <AvatarFallback>{meme.creator.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage 
+              src={meme.creator.avatar || "/sol-col.png"} // Fallback to a default avatar
+              alt={meme.creator.username}
+            />
+            {/* <AvatarFallback>
+              {meme.creator.substring(0, 2).toUpperCase()}
+            </AvatarFallback> */}
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-medium">{meme.creator.username}</span>
@@ -65,6 +71,7 @@ export default function MemeCard({ meme, showCategory = false }: MemeCardProps) 
           </div>
         </div>
         <h3 className="text-lg font-semibold mt-2">{meme.title}</h3>
+        <span className="text-sm font-light mt-2">{meme.description}</span>
         <div className="mt-1 flex flex-wrap gap-2">
           {showCategory && (
             <Badge variant="secondary" className="text-xs">

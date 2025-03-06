@@ -10,6 +10,7 @@ export interface User {
 export interface Meme {
   id: string;
   title: string;
+  description: string;
   imageUrl: string;
   creator: User;
   upvotes: number;

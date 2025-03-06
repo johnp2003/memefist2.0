@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MemeCard from "@/components/meme-card";
-import { getBattlesByCategory, getMemesByCategory } from "@/lib/mockData";
+import { getBattlesByCategory } from "@/lib/mockData";
 import { Battle, Meme } from "@/lib/types";
 import { Trophy, Calendar, Users, Clock, Swords, LockKeyhole } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ethers } from "ethers";
+
+// Load ABI from config
+const abi = require("@/config/abi.json");
 
 export default function BattlePage() {
   const params = useParams();
@@ -18,18 +22,80 @@ export default function BattlePage() {
   const [battle, setBattle] = useState<Battle | null>(null);
   const [memes, setMemes] = useState<Meme[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contract, setContract] = useState<any>(null);
 
+  // Initialize the smart contract
   useEffect(() => {
     window.scrollTo(0, 0);
-    // Simulate API call
-    setTimeout(() => {
-      const fetchedBattles = getBattlesByCategory(category);
-      const fetchedMemes = getMemesByCategory(category);
-      setBattle(fetchedBattles[0] || null);
-      setMemes(fetchedMemes);
-      setLoading(false);
-    }, 500);
-  }, [category]);
+    const initContract = async () => {
+      if (typeof window.ethereum !== "undefined") {
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" }); // Request account access
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const contractAddress = "0xC10B88aF2cf8480F9fA57ebc0EC4437a5FB6d233";
+          const contractInstance = new ethers.Contract(contractAddress, abi, signer);
+          setContract(contractInstance);
+          console.log("Contract initialized successfully");
+        } catch (error) {
+          console.error("Error initializing contract:", error);
+          setLoading(false);
+        }
+      } else {
+        console.error("Please install MetaMask!");
+        setLoading(false);
+      }
+    };
+    initContract();
+  }, []);
+
+  // Fetch battle and meme data
+  useEffect(() => {
+    if (category && contract) {
+      const fetchData = async () => {
+        try {
+          // Fetch battle data from mockdata.ts
+          const fetchedBattles = getBattlesByCategory(category);
+          console.log("Fetched battles:", fetchedBattles);
+          setBattle(fetchedBattles[0] || null);
+
+          // Fetch meme IDs from the smart contract
+          const getCategoryName = `${category.charAt(0).toUpperCase()}${category.slice(1)}`;   //This is to uppercase the category name
+          console.log("getCategoryName: ", getCategoryName);
+          const memeIds = await contract.getMemesByCategory(getCategoryName);
+          console.log("Meme IDs fetched:", memeIds);
+
+          // Fetch detailed info for each meme ID
+          if (memeIds.length > 0) {
+            const memePromises = memeIds.map(async (id: ethers.BigNumberish) => {
+              const memeInfo = await contract.getMemeInfo(id);
+              return {
+                id: id.toString(),
+                creator: memeInfo.creator,
+                title: memeInfo.title,
+                description: memeInfo.description,
+                imageUrl: memeInfo.imageURI,
+                upvotes: memeInfo.upvotes.toString(),
+                timestamp: new Date(Number(memeInfo.timestamp) * 1000).toISOString(),
+              };
+            });
+
+            const fetchedMemes = await Promise.all(memePromises);
+            console.log("Fetched memes:", fetchedMemes);
+            setMemes(fetchedMemes);
+          } else {
+            console.log("No memes found for category:", category);
+            setMemes([]);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [contract, category]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -42,26 +108,18 @@ export default function BattlePage() {
   const getTimeRemaining = (endDate: string) => {
     const now = new Date();
     const end = new Date(endDate);
-    
-    if (now >= end) {
-      return "Time Ended";
-    }
-    
-    return formatDistanceToNow(end, { addSuffix: false });
+    return now >= end ? "Time Ended" : formatDistanceToNow(end, { addSuffix: false });
   };
 
   const handleJoinBattle = () => {
     router.push(`/submit`);
   };
 
-  // Function to get status badge
   const getStatusBadge = () => {
     const now = new Date();
     const end = new Date(battle?.endDate || "");
     const hasEnded = now >= end;
-    
-    // If battle has ended, override status to closed
-    const currentStatus = hasEnded ? 'closed' : (battle?.status || 'ongoing');
+    const currentStatus = hasEnded ? "closed" : (battle?.status || "ongoing");
     
     const statusClass = {
       ongoing: "bg-green-500 text-white shadow-lg",
@@ -112,6 +170,7 @@ export default function BattlePage() {
           <span className="mr-2">←</span> Back
         </Button>
       </div>
+
       {/* Two-Column Layout: Image and Battle Details */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 mb-12">
         {/* Left Section: Enlarged Image */}
@@ -161,9 +220,7 @@ export default function BattlePage() {
                   <span>{battle?.prizePool || 0}x NFTs Value</span>
                 </div>
               </div>
-              <div>
-                {getStatusBadge()}
-              </div>
+              <div>{getStatusBadge()}</div>
               {/* Play Button */}
               <div className="flex justify-center">
                 {battle?.status === "closed" || getTimeRemaining(battle.endDate) === "Time Ended" ? (
@@ -193,9 +250,7 @@ export default function BattlePage() {
       {/* Description Section */}
       <div className="mb-12">
         <h2 className="text-xl font-bold">Description</h2>
-        <p className="text-muted-foreground mt-2">
-        {battle.description}
-        </p>
+        <p className="text-muted-foreground mt-2">{battle.description}</p>
       </div>
 
       {/* MemeCard Section */}

@@ -74,9 +74,9 @@ export default function Navbar() {
             <ModeToggle />
             {isConnected ? (
               <div className="flex items-center space-x-2">
-                <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                {/* <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                   {userEarnings} ETH
-                </div>
+                </div> */}
                 <Button variant="outline" asChild>
                   <ConnectButton.Custom>
                     {({ account, chain, openAccountModal }) => (
@@ -162,9 +162,9 @@ export default function Navbar() {
             )}
             {isConnected ? (
               <div className="px-3 py-2 space-y-2">
-                <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium inline-block">
+                {/* <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium inline-block">
                   {userEarnings} ETH
-                </div>
+                </div> */}
                 <Button variant="outline" className="w-full" asChild>
                   <ConnectButton.Custom>
                     {({ account, chain, openAccountModal }) => (
