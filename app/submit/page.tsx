@@ -14,14 +14,15 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ethers } from "ethers";
 import axios from "axios";
 
-const contractAddress = "0xC10B88aF2cf8480F9fA57ebc0EC4437a5FB6d233";
+const contractAddress = "0x50c89cbc4Bde6D08f3f7624B422A9dEff9cCB772";
 const contractABI = [
   {
     "inputs": [
       { "internalType": "string", "name": "category", "type": "string" },
       { "internalType": "string", "name": "title", "type": "string" },
       { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "imageURI", "type": "string" }
+      { "internalType": "string", "name": "imageURI", "type": "string" },
+      { "internalType": "string", "name": "metadataURI", "type": "string" }
     ],
     "name": "submitMeme",
     "outputs": [],
@@ -78,6 +79,25 @@ export default function SubmitPage() {
     }
   };
 
+  const uploadJSONToPinata = async (jsonData: any): Promise<string> => {
+    const url = "https://api.pinata.cloud/pinning/pinJSONToIPFS";
+    
+    try {
+      const response = await axios.post(url, jsonData, {
+        headers: {
+          "pinata_api_key": process.env.NEXT_PUBLIC_PINATA_API_KEY,
+          "pinata_secret_api_key": process.env.NEXT_PUBLIC_PINATA_API_SECRET,
+          "Content-Type": "application/json"
+        }
+      });
+      const ipfsHash = response.data.IpfsHash;
+      return `ipfs://${ipfsHash}`;
+    } catch (error) {
+      console.error("Pinata JSON upload error:", error);
+      throw new Error("Failed to upload metadata to Pinata");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -88,9 +108,23 @@ export default function SubmitPage() {
 
     try {
       setIsUploading(true);
+      
+      console.log("Uploading image to IPFS...");
       const imageURI = await uploadToPinata(file);
       const formattedImageURI = imageURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
       console.log("Formatted Image URI:", formattedImageURI);
+
+      console.log("Creating and uploading metadata...");
+      const nftJSON = {
+        name: title,
+        description: description,
+        image: formattedImageURI
+      };
+      
+      const metadataURI = await uploadJSONToPinata(nftJSON);
+      const formattedMetadataURI = metadataURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+      console.log("Formatted Metadata URI:", formattedMetadataURI);
+      
       setIsUploading(false);
 
       setIsSubmitting(true);
@@ -98,9 +132,24 @@ export default function SubmitPage() {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-      const tx = await contract.submitMeme(category, title, description, formattedImageURI);
+      console.log("Submitting to blockchain with params:", {
+        category,
+        title,
+        description,
+        imageURI: formattedImageURI,
+        metadataURI: formattedMetadataURI
+      });
+
+      const tx = await contract.submitMeme(
+        category,
+        title,
+        description,
+        formattedImageURI,
+        formattedMetadataURI
+      );
+      
       const receipt = await tx.wait();
-      console.log("Transaction successful:", receipt.transactionHash); // transaction hash value still null
+      console.log("Transaction successful:", receipt.transactionHash);
 
       setIsSubmitted(true);
 
