@@ -53,7 +53,7 @@ export default function Navbar() {
               <Home className="h-4 w-4 mr-2" />
               Home
             </Link>
-            <Link href="/battle/all" className="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-accent">
+            <Link href="/categories" className="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-accent">
               <Swords className="h-4 w-4 mr-2" />
               Memes
             </Link>

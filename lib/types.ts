@@ -12,6 +12,7 @@ export interface Meme {
   title: string;
   description: string;
   imageUrl: string;
+  metadataURI: string;
   creator: User;
   upvotes: number;
   downvotes: number;

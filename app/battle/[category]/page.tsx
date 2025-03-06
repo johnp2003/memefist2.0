@@ -33,7 +33,7 @@ export default function BattlePage() {
           await window.ethereum.request({ method: "eth_requestAccounts" }); // Request account access
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
-          const contractAddress = "0xC10B88aF2cf8480F9fA57ebc0EC4437a5FB6d233";
+          const contractAddress = "0x50c89cbc4Bde6D08f3f7624B422A9dEff9cCB772";
           const contractInstance = new ethers.Contract(contractAddress, abi, signer);
           setContract(contractInstance);
           console.log("Contract initialized successfully");
